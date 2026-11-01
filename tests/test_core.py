@@ -4,7 +4,6 @@ from datetime import datetime
 
 from aiusage.core import calculate_progress, ordinal_suffix
 
-
 def test_ordinal_suffix():
     """Test ordinal suffix generation."""
     assert ordinal_suffix(1) == '1st'
@@ -31,6 +30,38 @@ def test_calculate_progress_basic():
     assert result['current_day'] == 12
     assert result['days_since_renewal'] == 18  # Oct 12 - Sep 24 = 18 days
     assert result['days_in_billing_cycle'] == 30  # Sep 24 to Oct 24
+
+
+def test_calculate_progress_basic2():
+    """Test basic progress calculation."""
+    # Test with a known date: October 12, 2025, renewal day 1st
+    test_date = datetime(2025, 10, 12)
+    result = calculate_progress(25.0, current_date=test_date, target_day=1)
+
+    atol = 1e-3
+
+    assert result['current_percentage'] == 25.0
+    assert result['target_day'] == 1
+    assert result['current_day'] == 12
+    assert result['days_since_renewal'] == 11  # Oct 12 - Oct 1 = 11 days
+    assert result['days_in_billing_cycle'] == 31  # Oct 1 to Oct 31
+    assert abs(result['projected_usage'] - 25.0 * (31 / 11)) < atol  # 25% used in 11 days of 31 days
+
+
+def test_calculate_progress_basic3():
+    """Test basic progress calculation."""
+    # Test with a known date: October 12, 2025, renewal day 12th
+    test_date = datetime(2025, 10, 12)
+    result = calculate_progress(25.0, current_date=test_date, target_day=12)
+
+    atol = 1e-3
+
+    assert result['current_percentage'] == 25.0
+    assert result['target_day'] == 12
+    assert result['current_day'] == 12
+    assert result['days_since_renewal'] == 0  # Oct 12 - Oct 12 = 0 days
+    assert result['days_in_billing_cycle'] == 31  # Oct 12 to Nov 12
+    assert abs(result['projected_usage'] - 25.0 * (31 / 1)) < atol  # 25% used in 0 days of 31 days
 
 
 def test_calculate_progress_conserving():

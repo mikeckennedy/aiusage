@@ -113,7 +113,7 @@ def calculate_progress(
         if current_date.month == 1:
             last_renewal = current_date.replace(year=current_date.year - 1, month=12, day=target_day)
         else:
-            last_renewal = current_date.replace(month=current_date.month - 1, day=target_day)
+            last_renewal = current_date.replace(month=current_date.month, day=target_day)
     else:
         if current_date.month == 1:
             last_renewal = current_date.replace(year=current_date.year - 1, month=12, day=target_day)
@@ -145,13 +145,12 @@ def calculate_progress(
     # Project usage at renewal date based on current rate
     # If we're 16 days into a 31-day cycle with 25% used, rate is 25/16 = 1.56% per day
     # At day 31: 1.56 * 31 = 48.4% projected usage
-    if days_since_renewal > 0:
-        daily_rate = current_percentage / days_since_renewal
-        projected_usage = daily_rate * days_in_billing_cycle
-        projected_remaining = 100 - projected_usage
-    else:
-        projected_usage = 0
-        projected_remaining = 100
+    #
+    # If days_since_renewal=0 (i.e., we're on the renewal day), we can't calculate a rate yet. Therefore, we assume
+    # the day is almost over and thus approximate the rate by setting the days_since_renewal=1.
+    daily_rate = current_percentage / max(days_since_renewal, 1)
+    projected_usage = daily_rate * days_in_billing_cycle
+    projected_remaining = 100 - projected_usage
 
     # Status is inverted: using fewer credits than time = good (conserving)
     return {
